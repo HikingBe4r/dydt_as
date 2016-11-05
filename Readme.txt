@@ -44,3 +44,35 @@ actionbar.setDisplayShowHomeEnabled(false);
 MainActivity 구성요소 - DrawerActionBar, Floating Action Button, ListView
 
 [오전 4:26 2016-11-03]  FAB 하려다 실패. library를 넣어야 하는것 같음.
+
+----------------------------------------------------------
+[오후 3:29 2016-11-03]
+fab 넣으려다가그냥 android studio로 재시작.
+
+addschedule layout부터 시작.
+
+ActionBar가 왜 안보였느냐!!!!! == extends AppCompatActivity   [오후 7:26 2016-11-03]
+
+시계 띄우기 성공 TimePickerDialog를 Activity에서 불러온다. layout이 아니다. -- [오후 9:13 2016-11-03] 
+
+--------------------------------------------------------------
+[오후 12:08 2016-11-04]
+
+시계에서 time select하면 edittext에 추가. -- 완료
+actionbar에 back버튼 추가 -- 완료 
+	하는방법
+actionBar = getSupportActionBar();          // 아따 support가 넘나 어려운것..
+actionBar.setDisplayHomeAsUpEnabled(true);  // 뒤로가기 버튼생성
+
+
+<예정>
+요일 선택 및 반복버튼 추가
+일정 db에 등록 및 mainactivity에 출력
+
+settingsActivity 추가
+sendActivity 추가
+Main의 Navi 디테일 챙기기
+
+
+// 아이콘 추가하는법 (안드로이드 제공아이콘) [오후 6:23 2016-11-04]
+res - new - image asset - icon Type (ActionBar & Tab icon) 여기까지 보면 할수있을것.

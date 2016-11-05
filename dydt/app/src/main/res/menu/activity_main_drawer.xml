@@ -3,23 +3,25 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_camera"
+            android:id="@+id/nav_achievement"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Import" />
+            android:title="달성률" />
         <item
-            android:id="@+id/nav_gallery"
+            android:id="@+id/nav_review"
             android:icon="@drawable/ic_menu_gallery"
-            android:title="Gallery" />
+            android:title="리뷰쓰기" />
         <item
-            android:id="@+id/nav_slideshow"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="Slideshow" />
+            android:id="@+id/nav_send"
+            android:icon="@drawable/ic_menu_send"
+            android:title="건의사항" />
+        <!--android:icon="@drawable/ic_menu_slideshow"-->
         <item
-            android:id="@+id/nav_manage"
+            android:id="@+id/nav_settings"
             android:icon="@drawable/ic_menu_manage"
-            android:title="Tools" />
-    </group>
+            android:title="설정" />
 
+    </group>
+<!--
     <item android:title="Communicate">
         <menu>
             <item
@@ -32,5 +34,6 @@
                 android:title="Send" />
         </menu>
     </item>
+-->
 
 </menu>
