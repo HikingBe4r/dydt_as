@@ -76,3 +76,37 @@ Main의 Navi 디테일 챙기기
 
 // 아이콘 추가하는법 (안드로이드 제공아이콘) [오후 6:23 2016-11-04]
 res - new - image asset - icon Type (ActionBar & Tab icon) 여기까지 보면 할수있을것.
+
+---------------------------------------------------------------------
+[오전 11:40 2016-11-08]
+//PandingIntent 가 그 용도죠. alarmManager랑 아주 그냥 찰떡처럼 붙어있는 놈이죠
+
+<addschedule Activity>
+뒤로가기 툴바버튼 function		-- finish와 intent후 finishactivity중 고민. 일단 finish함.
+Accept 메뉴버튼 function - 일정 db에 저장할것.
+제목, 시간, 내용 저장 -> MainActivity 표시
+
+<MainActivity>
+AddSchedule에서 저장된 일정 표시하기.  -> content_main.xml
+일정 선택후 삭제, 수정기능		-> google에 listview swipe 로 search
+왼쪽에서 오른쪽 드래그하면 일정완료 체크. - function1
+오른쪽에서 왼쪽 드래그하면 일정 삭제.	  - function2
+
+일정 클릭하면 일정내용 다 볼수있음 -> addschedule.activity 로 intent
+
+튜토리얼 화면 - ImageSwitcher, ViewFlipper 등을 참조하세요.
+	        화면을 Fragment로 잡으시고, ViewPager로 구현하면 되요..
+                최종결과는 화면 스와이프하면 다른 그림 나오고 그림나오고 하는 기능임.
+
+
+달성률 nav 아이콘수정
+리뷰쓰기 nav 아이콘수정
+
+----------------------------------------------------------------------
+[오후 3:55 2016-11-13]
+있던 일정 클릭했을떄 메뉴바에 있는 accept 아이콘을 휴지통 아이콘으로 바꾸고, 삭제 기능을 하게함.
+
+----------------------------------------------------------------------
+https://hikingbearstudio.slack.com/messages/readme/
+
+slack 으로 ReadMe 를 옮기기로 했습니다.

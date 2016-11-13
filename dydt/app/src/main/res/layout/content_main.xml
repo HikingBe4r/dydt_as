@@ -13,4 +13,12 @@
     tools:context="com.hikingbear.didyoudothat.MainActivity"
     tools:showIn="@layout/app_bar_main">
 
+    <!-- 여기에 main에 일정이 나올 listview 작성 -->
+
+    <ListView
+        android:id="@+id/lv_schedule"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    </ListView>
+
 </RelativeLayout>
