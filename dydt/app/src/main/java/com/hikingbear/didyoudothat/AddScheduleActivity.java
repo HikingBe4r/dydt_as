@@ -66,6 +66,7 @@ public class AddScheduleActivity extends AppCompatActivity {
          * 평소에는 accept 버튼이 출력된다.
          */
         Bundle extras = getIntent().getExtras();
+
         if(extras !=null)
         {
             int Value = extras.getInt("_id");
@@ -162,6 +163,7 @@ public class AddScheduleActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(intent);
                 finish();
+
                 return true;
             } else if (id == R.id.action_accept && et_sub.getText() == null) {
                 Toast.makeText(this, "다시 입력해주세요..", Toast.LENGTH_SHORT).show();

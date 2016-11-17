@@ -96,11 +96,33 @@ public class DBManager extends SQLiteOpenHelper {
         db.execSQL(_query);
         db.close();
     }*/
+    public Cursor fetchAllNames() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor mCursor =  db.rawQuery("SELECT * FROM SCHEDULE_LIST", null);
+        //app.myDbHelper.MyDB().query("cardlist", new String[] {"cardid as _id","cardname","carddesc"}, null, null, null, null, null);
+        try{
+
+            if (mCursor != null) {
+                mCursor.moveToFirst();
+            }
+            return mCursor;
+        }catch(Exception e)
+        {
+            return mCursor;
+        }
+}
 
     public Cursor getData(int id){
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor res =  db.rawQuery( "select * from SCHEDULE_LIST where _id="+id+"", null );
         return res;
+    }
+
+    public int get_id(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res =  db.rawQuery( "select * from SCHEDULE_LIST where _id="+id+"", null );
+        int _id = res.getInt(0);
+        return _id;
     }
 
     public int numberOfRows(){
@@ -132,7 +154,7 @@ public class DBManager extends SQLiteOpenHelper {
                 new String[] { Integer.toString(id) });
     }
 
-    public ArrayList<String> getAllContacts()
+    public ArrayList<String> getAllSchedule()
     {
         ArrayList<String> array_list = new ArrayList<String>();
 

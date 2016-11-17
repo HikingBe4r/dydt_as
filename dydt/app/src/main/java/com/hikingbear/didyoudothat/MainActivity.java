@@ -1,6 +1,8 @@
 package com.hikingbear.didyoudothat;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -14,7 +16,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -28,9 +32,10 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private ListView mListView;
-    DBManager dbManager;
+    public DBManager dbManager;
     public Bundle dataBundle;
-
+    int id_To_Search;
+    Cursor cs;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +45,7 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         dbManager = new DBManager(getApplicationContext());
+        cs = dbManager.fetchAllNames();
 
         // 일정추가버튼 (+)
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -62,51 +68,94 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         // ListView, swipe
-
-        ArrayList array_list = dbManager.getAllContacts();
+        final ArrayList array_list = dbManager.getAllSchedule();
         final ArrayAdapter arrayAdapter=new ArrayAdapter(this,android.R.layout.simple_list_item_1, array_list);
 
         mListView = (ListView)findViewById(R.id.lv_schedule);
         mListView.setAdapter(arrayAdapter);
 
-        // 일정선택시 databundle값 설정
+        /**
+         * 일정선택시 databundle값을 설정해 다른 activity에 넘긴다.
+         * 이것도 일단은 해결.
+         */
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
-            public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,long arg3) {
-                // TODO Auto-generated method stub
-                int id_To_Search = arg2 + 1;
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if(cs != null) {
+                    if(cs.moveToFirst()) {
+                        cs.moveToPosition(position);
+                        int id_To_Search = cs.getInt(cs.getColumnIndex("_id"));
+                        dataBundle = new Bundle();
+                        dataBundle.putInt("_id", id_To_Search);
 
-                dataBundle = new Bundle();
-                dataBundle.putInt("_id", id_To_Search);
+                        Intent intent = new Intent(getApplicationContext(), AddScheduleActivity.class);
+                        intent.putExtras(dataBundle);
+                        startActivity(intent);
 
-                Intent intent = new Intent(getApplicationContext(), AddScheduleActivity.class);
-
-                intent.putExtras(dataBundle);
-                startActivity(intent);
+                    }
+                }
             }
         });
-        // swipe 기능 이건 삭제만 하는 기능이라 여기서 변경을 해야함.
+
+        /**
+         * 꾹 눌렀을때 기능
+         * 1. 체크가 된다. (체크한 일정 & id가 뭔지 기억해둬야함.)
+         * 2. actionbar와 fab가 변경됨. (기본: actionbar - navi(다른메뉴), fab(일정추가)
+         *                               변경: actionbar - delete(삭제기능), fab(숨기기))
+         * 
+         */
+
+        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                if(cs != null) {
+                    if(cs.moveToFirst()) {
+                        cs.moveToPosition(position);
+                        int id_To_Search = cs.getInt(cs.getColumnIndex("_id"));
+                        dataBundle = new Bundle();
+                        dataBundle.putInt("_id", id_To_Search);
+
+                        //Intent intent = new Intent(getApplicationContext(), AddScheduleActivity.class);
+                        //intent.putExtras(dataBundle);
+                        //startActivity(intent);
+                    }
+                }
+                return false;
+            }
+        });
+
+        /**
+         * swipe 기능 이건 삭제만 하는 기능이라 여기서 변경을 해야함.
+         * 지우고나서 바로 refresh돼야 클릭해서 일정확인이 가능한데 그게 안되네.
+         * cs = dbManager.fetchAllNames(); 을 사용한다--> 왜냐? customAdapter를 사용중이니까 내가 직접해야한다.
+         * arrayAdapter.notifyDataSetChanged(); 는 써도 당연히 안된다. custom일때는..
+         * ------
+         * 어쨌든 완성
+         */
         SwipeDismissListViewTouchListener touchListener =
                 new SwipeDismissListViewTouchListener(mListView,
-                        new SwipeDismissListViewTouchListener.DismissCallbacks() {
-                            @Override
-                            public boolean canDismiss(int position) {
-                                return true;
-                            }
+                new SwipeDismissListViewTouchListener.DismissCallbacks() {
+                    @Override
+                    public boolean canDismiss(int position) {
+                        return true;
+                    }
 
-                            @Override
-                            public void onDismiss(ListView listView, int[] reverseSortedPositions) {
-                                for(int position: reverseSortedPositions) {
-                                    //db에서 삭제도 해야함.
-
+                    @Override
+                    public void onDismiss(ListView listView, int[] reverseSortedPositions) {
+                        for(int position: reverseSortedPositions) {
+                            if(cs != null) {
+                                if(cs.moveToFirst()) {
+                                    cs.moveToPosition(position);
+                                    dbManager.deleteTest(cs.getInt(0));
                                     arrayAdapter.remove(arrayAdapter.getItem(position));
-                                    int id_To_Search = position + 1;
-                                    dbManager.deleteTest(id_To_Search);
+                                    cs = dbManager.fetchAllNames();
                                 }
-                                arrayAdapter.notifyDataSetChanged();
                             }
-                        });
+                        }
+                    }
+                });
+
         mListView.setOnTouchListener(touchListener);
         mListView.setOnScrollListener(touchListener.makeScrollListener());
 
@@ -151,6 +200,7 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
 }
 
 
