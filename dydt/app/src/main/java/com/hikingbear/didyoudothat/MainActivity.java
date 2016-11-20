@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.view.ActionMode;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -15,6 +16,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Window;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
@@ -41,13 +44,17 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        // choice모드 때 status bar color 없어지는거 보정
+        Window window = getWindow();
+        window.setStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
+
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         dbManager = new DBManager(getApplicationContext());
         cs = dbManager.fetchAllNames();
 
-        // 일정추가버튼 (+)
+        // 일정추가버튼 (+) fab
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -57,7 +64,7 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        // navigation drawer
+        // navigation drawer - actionbar left button
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -69,11 +76,58 @@ public class MainActivity extends AppCompatActivity
 
         // ListView, swipe
         final ArrayList array_list = dbManager.getAllSchedule();
-        final ArrayAdapter arrayAdapter=new ArrayAdapter(this,android.R.layout.simple_list_item_1, array_list);
+        final ArrayAdapter arrayAdapter=new ArrayAdapter(this,android.R.layout.simple_list_item_activated_1, array_list);
 
         mListView = (ListView)findViewById(R.id.lv_schedule);
         mListView.setAdapter(arrayAdapter);
 
+        mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+        /**
+         * longclick을 하면 choice모드가 된다.
+         * onItemCheckedStateChanged: check상태가 바뀔때마다 실행
+         * onCreateActionMode: 처음 choice모드가 되면 실행
+         * onPrepareActionMode: onCreateActionMode 이후에 실행
+         * onDestroyActionMode: choice모드에서 나갈때 실행행
+         * 0*/
+
+        mListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+            @Override
+            public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+                System.out.println("====onItemCheckedStateChanged====");
+                int checkedCount = mListView.getCheckedItemCount();
+                //for (int i=0; i < checkedCount; i++) {
+                    System.out.println("checkedCount: "+checkedCount);
+                //}
+            }
+
+            @Override
+            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                // status bar color change
+                System.out.println("====onCreateActionMode====");
+                if (getSupportActionBar() != null)
+                    getSupportActionBar().hide();
+                return true;
+            }
+
+            @Override
+            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                System.out.println("====onPrepareActionMode====");
+                return false;
+            }
+
+            @Override
+            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                System.out.println("====onActionItemClicked====");
+                return false;
+            }
+
+            @Override
+            public void onDestroyActionMode(ActionMode mode) {
+                System.out.println("====onDestroyActionMode====");
+                if (getSupportActionBar() != null)
+                    getSupportActionBar().show();
+            }
+        });
         /**
          * 일정선택시 databundle값을 설정해 다른 activity에 넘긴다.
          * 이것도 일단은 해결.
@@ -85,7 +139,7 @@ public class MainActivity extends AppCompatActivity
                 if(cs != null) {
                     if(cs.moveToFirst()) {
                         cs.moveToPosition(position);
-                        int id_To_Search = cs.getInt(cs.getColumnIndex("_id"));
+                        id_To_Search = cs.getInt(cs.getColumnIndex("_id"));
                         dataBundle = new Bundle();
                         dataBundle.putInt("_id", id_To_Search);
 
@@ -100,15 +154,19 @@ public class MainActivity extends AppCompatActivity
 
         /**
          * 꾹 눌렀을때 기능
-         * 1. 체크가 된다. (체크한 일정 & id가 뭔지 기억해둬야함.)
+         * 1. 체크가 된다. (체크한 일정 & id가 뭔지 기억해둬야함.) highlight 기능이면 좋겠군.
          * 2. actionbar와 fab가 변경됨. (기본: actionbar - navi(다른메뉴), fab(일정추가)
          *                               변경: actionbar - delete(삭제기능), fab(숨기기))
-         * 
+         *    a. 롱클릭한 listview item의 배경색을 파란색으로 바꾼다.
+         *    b. actionbar를 바꾼다.
+         *    c.
          */
-
+/*
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                System.out.println("mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);");
+
                 if(cs != null) {
                     if(cs.moveToFirst()) {
                         cs.moveToPosition(position);
@@ -121,9 +179,11 @@ public class MainActivity extends AppCompatActivity
                         //startActivity(intent);
                     }
                 }
+
                 return false;
             }
         });
+        */
 
         /**
          * swipe 기능 이건 삭제만 하는 기능이라 여기서 변경을 해야함.
@@ -161,7 +221,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    // 자연스럽게 navi가 들어가게.
+    // 자연스럽게 navi가 들어가게. 스르륵 스르륵
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -176,7 +236,6 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
         int id = item.getItemId();
 
         if (id == R.id.nav_achievement) {
