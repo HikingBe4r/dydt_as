@@ -1,5 +1,8 @@
 package com.hikingbear.didyoudothat;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -30,6 +33,7 @@ import com.hikingbear.swipe.SwipeDismissListViewTouchListener;
 
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -89,15 +93,26 @@ public class MainActivity extends AppCompatActivity
          * onPrepareActionMode: onCreateActionMode 이후에 실행
          * onDestroyActionMode: choice모드에서 나갈때 실행행
          * 0*/
+        final List<Integer> selectedList = new ArrayList<>();
 
         mListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
             @Override
             public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
                 System.out.println("====onItemCheckedStateChanged====");
                 int checkedCount = mListView.getCheckedItemCount();
+                mode.setTitle(checkedCount+ " Selected");
+
+                if(checked)
+                    selectedList.add(position);
+                else
+                    selectedList.remove(position);
+
+                System.out.println("checkedCount: "+checkedCount);
                 //for (int i=0; i < checkedCount; i++) {
-                    System.out.println("checkedCount: "+checkedCount);
+                //    System.out.println("i번째: "+mListView.getCheckedItemIds()[i]);
                 //}
+                //if(mListView.getCheckedItemIds() != null)
+                    System.out.println("getCheckedItemIds: "+mListView.getCheckedItemPosition());
             }
 
             @Override
@@ -112,21 +127,83 @@ public class MainActivity extends AppCompatActivity
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
                 System.out.println("====onPrepareActionMode====");
+                getMenuInflater().inflate(R.menu.list_select_menu , menu);
                 return false;
             }
 
+            /**
+             * 1. listview 아이템 check
+             * 2. 뒤로가기버튼 or delete버튼
+             * 3. delete버튼 - 몇개 체크됐는지, 체크된 아이템이 뭔지,
+             * 4. 정말 삭제하시겠습니까? 띄우기.
+             *
+             * 완성.
+             */
+            //Context context = getApplicationContext();
             @Override
-            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            public boolean onActionItemClicked(final ActionMode mode, MenuItem item) {
                 System.out.println("====onActionItemClicked====");
+                int id = item.getItemId();
+
+                if (id == R.id.action_delete) {
+                    System.out.println("delete gogo");
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+
+                    // 제목셋팅
+                    alertDialogBuilder.setTitle("일정 삭제");
+                    alertDialogBuilder
+                            .setMessage("정말로 삭제하시겠습니까?")
+                            .setCancelable(false)
+                            .setPositiveButton("삭제",
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            // 삭제한다.
+                                            for(int position: selectedList) {
+                                                System.out.println(position+"번 아이템");
+                                                if(cs != null) {
+                                                    if(cs.moveToFirst()) {
+                                                        cs.moveToPosition(position);
+                                                        dbManager.deleteTest(cs.getInt(0));
+                                                        arrayAdapter.remove(arrayAdapter.getItem(position));
+
+                                                    }
+                                                }
+                                                System.out.println("삭제");
+                                            }
+                                            cs = dbManager.fetchAllNames();
+                                            mode.finish();
+                                        }
+
+                                    })
+                            .setNegativeButton("취소",
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(
+                                                DialogInterface dialog, int id) {
+                                            // 다이얼로그를 취소한다
+                                            dialog.cancel();
+
+                                        }
+                                    });
+                    // 다이얼로그 생성
+                    AlertDialog alertDialog = alertDialogBuilder.create();
+
+                    // 다이얼로그 보여주기
+                    alertDialog.show();
+
+                    return true;
+                }
                 return false;
             }
+
 
             @Override
             public void onDestroyActionMode(ActionMode mode) {
                 System.out.println("====onDestroyActionMode====");
                 if (getSupportActionBar() != null)
                     getSupportActionBar().show();
+                selectedList.clear();
             }
+
         });
         /**
          * 일정선택시 databundle값을 설정해 다른 activity에 넘긴다.
@@ -151,6 +228,8 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
+
+
 
         /**
          * 꾹 눌렀을때 기능
@@ -260,6 +339,24 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+/*
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        if (id == R.id.action_delete) {
+            System.out.println("delete gogo");
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+    */
+
+
 }
 
 
@@ -271,20 +368,9 @@ public class MainActivity extends AppCompatActivity
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
-
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
     */
+
+
+
+
+
