@@ -25,6 +25,7 @@
             android:theme="@style/AppTheme"></activity>
         <activity android:name=".SendActivity" />
         <activity android:name=".SettingsActivity" />
+        <activity android:name=".ViewApplicationList" />
     </application>
 
 </manifest>
