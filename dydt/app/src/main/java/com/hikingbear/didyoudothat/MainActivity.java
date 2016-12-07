@@ -1,14 +1,11 @@
 package com.hikingbear.didyoudothat;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.view.ActionMode;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -22,9 +19,7 @@ import android.view.MenuItem;
 import android.view.Window;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -33,6 +28,7 @@ import com.hikingbear.swipe.SwipeDismissListViewTouchListener;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
@@ -92,7 +88,7 @@ public class MainActivity extends AppCompatActivity
          * onCreateActionMode: 처음 choice모드가 되면 실행
          * onPrepareActionMode: onCreateActionMode 이후에 실행
          * onDestroyActionMode: choice모드에서 나갈때 실행행
-         * 0*/
+         */
         final List<Integer> selectedList = new ArrayList<>();
 
         mListView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
@@ -100,19 +96,27 @@ public class MainActivity extends AppCompatActivity
             public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
                 System.out.println("====onItemCheckedStateChanged====");
                 int checkedCount = mListView.getCheckedItemCount();
-                mode.setTitle(checkedCount+ " Selected");
 
-                if(checked)
-                    selectedList.add(position);
-                else
-                    selectedList.remove(position);
+                if(checkedCount != 0) {
+                    mode.setTitle(checkedCount + " Selected");
+                    if (checked)
+                        selectedList.add(position);
+                    else
+                        selectedList.remove(position);
 
-                System.out.println("checkedCount: "+checkedCount);
-                //for (int i=0; i < checkedCount; i++) {
-                //    System.out.println("i번째: "+mListView.getCheckedItemIds()[i]);
-                //}
-                //if(mListView.getCheckedItemIds() != null)
-                    System.out.println("getCheckedItemIds: "+mListView.getCheckedItemPosition());
+                    System.out.println("checkedCount: " + checkedCount);
+                    System.out.println("getCheckedItemIds: " + mListView.getCheckedItemPosition());
+
+                    // 삭제시 오류를 막기위한 정렬
+                    Collections.sort(selectedList);
+                    Collections.reverse(selectedList);
+                }
+                else if(checkedCount == 0) {
+                    System.out.println("0개니까 꺼져야함.");
+                    Toast.makeText(MainActivity.this, "0개니까 꺼져야함.", Toast.LENGTH_SHORT).show();
+                    mode.finish();
+                }
+
             }
 
             @Override
@@ -127,7 +131,8 @@ public class MainActivity extends AppCompatActivity
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
                 System.out.println("====onPrepareActionMode====");
-                getMenuInflater().inflate(R.menu.list_select_menu , menu);
+                getMenuInflater().inflate(R.menu.menu_selectschedule, menu);
+
                 return false;
             }
 
@@ -163,8 +168,8 @@ public class MainActivity extends AppCompatActivity
                                                 if(cs != null) {
                                                     if(cs.moveToFirst()) {
                                                         cs.moveToPosition(position);
-                                                        dbManager.deleteTest(cs.getInt(0));
-                                                        arrayAdapter.remove(arrayAdapter.getItem(position));
+                                                        dbManager.deleteSchedule(cs.getInt(0));
+                                                        arrayAdapter.remove(arrayAdapter.getItem(position));    // 여기서 역순으로 지워줘야 똑바로 잘 지우ㅝ진다.
 
                                                     }
                                                 }
@@ -229,41 +234,6 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-
-
-        /**
-         * 꾹 눌렀을때 기능
-         * 1. 체크가 된다. (체크한 일정 & id가 뭔지 기억해둬야함.) highlight 기능이면 좋겠군.
-         * 2. actionbar와 fab가 변경됨. (기본: actionbar - navi(다른메뉴), fab(일정추가)
-         *                               변경: actionbar - delete(삭제기능), fab(숨기기))
-         *    a. 롱클릭한 listview item의 배경색을 파란색으로 바꾼다.
-         *    b. actionbar를 바꾼다.
-         *    c.
-         */
-/*
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                System.out.println("mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);");
-
-                if(cs != null) {
-                    if(cs.moveToFirst()) {
-                        cs.moveToPosition(position);
-                        int id_To_Search = cs.getInt(cs.getColumnIndex("_id"));
-                        dataBundle = new Bundle();
-                        dataBundle.putInt("_id", id_To_Search);
-
-                        //Intent intent = new Intent(getApplicationContext(), AddScheduleActivity.class);
-                        //intent.putExtras(dataBundle);
-                        //startActivity(intent);
-                    }
-                }
-
-                return false;
-            }
-        });
-        */
-
         /**
          * swipe 기능 이건 삭제만 하는 기능이라 여기서 변경을 해야함.
          * 지우고나서 바로 refresh돼야 클릭해서 일정확인이 가능한데 그게 안되네.
@@ -286,7 +256,7 @@ public class MainActivity extends AppCompatActivity
                             if(cs != null) {
                                 if(cs.moveToFirst()) {
                                     cs.moveToPosition(position);
-                                    dbManager.deleteTest(cs.getInt(0));
+                                    dbManager.deleteSchedule(cs.getInt(0));
                                     arrayAdapter.remove(arrayAdapter.getItem(position));
                                     cs = dbManager.fetchAllNames();
                                 }
@@ -330,8 +300,8 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_settings) {
             Toast.makeText(this, "추가예정입니다.", Toast.LENGTH_SHORT).show();
-            //Intent intent = new Intent (MainActivity.this, SettingsActivity.class);
-            //startActivity(intent);
+            Intent intent = new Intent (MainActivity.this, ViewApplicationList.class);
+            startActivity(intent);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -361,15 +331,6 @@ public class MainActivity extends AppCompatActivity
 
 
 // 이건 없어도 되지않을까 생각. 내가 우상단 버튼을 안쓰기 때문.
-    /*
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-    */
-
 
 
 
