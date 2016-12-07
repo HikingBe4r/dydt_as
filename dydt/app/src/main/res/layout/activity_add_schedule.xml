@@ -54,34 +54,4 @@
         android:layout_below="@+id/tv_description"
         android:hint="내용 입력" />
 
-    <TextView
-        android:id="@+id/tv_applist"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/et_description"
-        android:text="앱선택"    />
-
-
-    <ImageButton
-        android:id="@+id/ib_applist"
-        app:srcCompat="@drawable/ic_button_applist"
-        android:background="?android:selectableItemBackground"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="5dp"
-        android:layout_below="@+id/tv_applist"/>
-
-    <TextView
-        android:id="@+id/tv_appname"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:paddingTop="5dp"
-        android:paddingLeft="10dp"
-        android:paddingBottom="5dp"
-        android:textSize="20dp"
-        android:layout_alignTop="@+id/ib_applist"
-        android:layout_toEndOf="@+id/ib_applist"
-        android:text="테스트"/>
-
 </RelativeLayout>

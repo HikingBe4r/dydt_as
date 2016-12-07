@@ -26,10 +26,8 @@ public class DBManager extends SQLiteOpenHelper {
     public static final String SCHEDULE_COLUMN_HOUR = "hour";
     public static final String SCHEDULE_COLUMN_MINUTE = "minute";
     public static final String SCHEDULE_COLUMN_DESCRIPTION = "description";
-    public static final String SCHEDULE_COLUMN_APP = "app";
 
     private HashMap hp;
-
 
     public DBManager(Context context) {
         super(context, DATABASE_NAME , null, 1);
@@ -38,7 +36,7 @@ public class DBManager extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         // TODO Auto-generated method stub
-        String sql ="CREATE TABLE IF NOT EXISTS SCHEDULE_LIST( _id INTEGER PRIMARY KEY AUTOINCREMENT, subject TEXT, year LONG, month LONG, day LONG, hour LONG, minute LONG, description TEXT, app TEXT);";
+        String sql ="CREATE TABLE IF NOT EXISTS SCHEDULE_LIST( _id INTEGER PRIMARY KEY AUTOINCREMENT, subject TEXT, year INT, month INT, day INT, hour INT, minute INT, description TEXT);";
         db.execSQL(sql);
     }
 
@@ -49,7 +47,8 @@ public class DBManager extends SQLiteOpenHelper {
         onCreate(db);
     }
     //subject TEXT, year INT, month INT, day INT, hour INT, minute INT, description TEXT
-    public boolean insertSchedule  (String subject, long year, long month, long day, long hour, long minute, String description)    {
+    public boolean insertSchedule  (String subject, int year, int month, int day, int hour, int minute, String description)
+    {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(SCHEDULE_COLUMN_SUBJECT, subject);
@@ -63,52 +62,8 @@ public class DBManager extends SQLiteOpenHelper {
 
         return true;
     }
-    public boolean insertSchedule  (String subject, long year, long month, long day, long hour, long minute, String description, String appname)    {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(SCHEDULE_COLUMN_SUBJECT, subject);
-        contentValues.put(SCHEDULE_COLUMN_YEAR, year);
-        contentValues.put(SCHEDULE_COLUMN_MONTH, month);
-        contentValues.put(SCHEDULE_COLUMN_DAY, day);
-        contentValues.put(SCHEDULE_COLUMN_HOUR, hour);
-        contentValues.put(SCHEDULE_COLUMN_MINUTE, minute);
-        contentValues.put(SCHEDULE_COLUMN_DESCRIPTION, description);
-        contentValues.put(SCHEDULE_COLUMN_APP, appname);
-        db.insert(SCHEDULE_TABLE_NAME, null, contentValues);
 
-        return true;
-    }
-    public boolean updateSchedule (Integer id, String subject, long year, long month, long day, long hour, long minute, String description)    {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(SCHEDULE_COLUMN_SUBJECT, subject);
-        contentValues.put(SCHEDULE_COLUMN_YEAR, year);
-        contentValues.put(SCHEDULE_COLUMN_MONTH, month);
-        contentValues.put(SCHEDULE_COLUMN_DAY, day);
-        contentValues.put(SCHEDULE_COLUMN_HOUR, hour);
-        contentValues.put(SCHEDULE_COLUMN_MINUTE, minute);
-        contentValues.put(SCHEDULE_COLUMN_DESCRIPTION, description);
-        db.update(SCHEDULE_TABLE_NAME, contentValues, "_id = ? ", new String[] { Integer.toString(id) } );
-        return true;
-    }
-
-    public boolean updateSchedule (Integer id, String subject, long year, long month, long day, long hour, long minute, String description, String appname)    {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(SCHEDULE_COLUMN_SUBJECT, subject);
-        contentValues.put(SCHEDULE_COLUMN_YEAR, year);
-        contentValues.put(SCHEDULE_COLUMN_MONTH, month);
-        contentValues.put(SCHEDULE_COLUMN_DAY, day);
-        contentValues.put(SCHEDULE_COLUMN_HOUR, hour);
-        contentValues.put(SCHEDULE_COLUMN_MINUTE, minute);
-        contentValues.put(SCHEDULE_COLUMN_DESCRIPTION, description);
-        contentValues.put(SCHEDULE_COLUMN_APP, appname);
-
-        db.update(SCHEDULE_TABLE_NAME, contentValues, "_id = ? ", new String[] { Integer.toString(id) } );
-        return true;
-    }
-
-    public boolean deleteSchedule(int _id) {
+    public boolean deleteTest(int _id) {
 
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -121,21 +76,43 @@ public class DBManager extends SQLiteOpenHelper {
         return true;
     }
 
+    /**
+     *  id가 1부터 시작해서 총 count된 갯수만큼 까지 재정렬하는 기능
+     *  ex) 3,4,7,8,9  -> 1,2,3,4,5
+     * */
+    public boolean sortSchedule() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("SELECT * FROM "+SCHEDULE_TABLE_NAME+" ORDER BY _id ASC"); // asc 오름차순, desc 내림차순
+        int count = db.rawQuery("SELECT * FROM "+SCHEDULE_TABLE_NAME, null).getCount();      // 총 db 갯수
+        for (int i = 0; i < count; i++) {
+
+        }
+
+        return true;
+    }
+/*
+    public void insert(String _query) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.execSQL(_query);
+        db.close();
+    }*/
     public Cursor fetchAllNames() {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor mCursor =  db.rawQuery("SELECT * FROM SCHEDULE_LIST", null);
         //app.myDbHelper.MyDB().query("cardlist", new String[] {"cardid as _id","cardname","carddesc"}, null, null, null, null, null);
-        try {
+        try{
+
             if (mCursor != null) {
                 mCursor.moveToFirst();
             }
             return mCursor;
-        }catch(Exception e) {
+        }catch(Exception e)
+        {
             return mCursor;
         }
 }
 
-    public Cursor getData(int id) {
+    public Cursor getData(int id){
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor res =  db.rawQuery( "select * from SCHEDULE_LIST where _id="+id+"", null );
         return res;
@@ -152,6 +129,29 @@ public class DBManager extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         int numRows = (int) DatabaseUtils.queryNumEntries(db, SCHEDULE_TABLE_NAME);
         return numRows;
+    }
+
+    public boolean updateSchedule (Integer id, String subject, int year, int month, int day, int hour, int minute, String description)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(SCHEDULE_COLUMN_SUBJECT, subject);
+        contentValues.put(SCHEDULE_COLUMN_YEAR, year);
+        contentValues.put(SCHEDULE_COLUMN_MONTH, month);
+        contentValues.put(SCHEDULE_COLUMN_DAY, day);
+        contentValues.put(SCHEDULE_COLUMN_HOUR, hour);
+        contentValues.put(SCHEDULE_COLUMN_MINUTE, minute);
+        contentValues.put(SCHEDULE_COLUMN_DESCRIPTION, description);
+        db.update(SCHEDULE_TABLE_NAME, contentValues, "_id = ? ", new String[] { Integer.toString(id) } );
+        return true;
+    }
+
+    public Integer deleteSchedule (Integer id)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(SCHEDULE_TABLE_NAME,
+                "_.id = ? ",
+                new String[] { Integer.toString(id) });
     }
 
     public ArrayList<String> getAllSchedule()
