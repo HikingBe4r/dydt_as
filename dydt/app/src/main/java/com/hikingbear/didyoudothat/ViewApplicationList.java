@@ -23,12 +23,13 @@ public class ViewApplicationList extends Activity implements AdapterView.OnItemC
 
     PackageManager packageManager;
     ListView apkList;
-    public Bundle dataBundle;
+    public Bundle extras;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_viewapplist);
+        extras = getIntent().getExtras();
 
         packageManager = getPackageManager();
         List<PackageInfo> packageList = packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS);
@@ -72,17 +73,17 @@ public class ViewApplicationList extends Activity implements AdapterView.OnItemC
         //startActivity(appInfo);
         try {
 
-            Toast.makeText(this, "선택한 어플: " + packageInfo.packageName, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "선택한 어플: " + packageManager.getApplicationLabel(packageInfo.applicationInfo).toString(), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "선택한 어플: " + packageManager.getApplicationLabel(packageInfo.applicationInfo).toString(), Toast.LENGTH_SHORT).show();
 
             //Intent intent = packageManager.getLaunchIntentForPackage(packageInfo.packageName);
             //if(intent != null) {
             //    startActivity(intent);
             //}
-            dataBundle = new Bundle();
-            dataBundle.putString("app", packageInfo.packageName);
-
+            extras.putString("packagename", packageInfo.packageName);
+            extras.putString("appname", packageManager.getApplicationLabel(packageInfo.applicationInfo).toString());
             Intent intent = new Intent(getApplicationContext(), AddScheduleActivity.class);
-            intent.putExtras(dataBundle);
+            intent.putExtras(extras);
             startActivity(intent);
             finish();
 

@@ -54,7 +54,12 @@ public class MainActivity extends AppCompatActivity
         dbManager = new DBManager(getApplicationContext());
         cs = dbManager.fetchAllNames();
 
-        // 일정추가버튼 (+) fab
+        /**
+         * 일정추가버튼 (+) fab
+         * 일정을 추가할떄 쓰는 오른쪽아래에 있는 버튼.
+         * 아이콘은 ic_action_modify를 쓰고,
+         * 색깔은 액션바 색과 같은색을 쓴다.
+         */
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -64,7 +69,9 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        // navigation drawer - actionbar left button
+        /**
+         * navigation drawer - actionbar left button
+         */
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -151,7 +158,6 @@ public class MainActivity extends AppCompatActivity
                 int id = item.getItemId();
 
                 if (id == R.id.action_delete) {
-                    System.out.println("delete gogo");
                     AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
 
                     // 제목셋팅
@@ -200,7 +206,6 @@ public class MainActivity extends AppCompatActivity
                 return false;
             }
 
-
             @Override
             public void onDestroyActionMode(ActionMode mode) {
                 System.out.println("====onDestroyActionMode====");
@@ -224,9 +229,9 @@ public class MainActivity extends AppCompatActivity
                         id_To_Search = cs.getInt(cs.getColumnIndex("_id"));
                         dataBundle = new Bundle();
                         dataBundle.putInt("_id", id_To_Search);
-
                         Intent intent = new Intent(getApplicationContext(), AddScheduleActivity.class);
                         intent.putExtras(dataBundle);
+
                         startActivity(intent);
 
                     }
@@ -328,10 +333,3 @@ public class MainActivity extends AppCompatActivity
 
 
 }
-
-
-// 이건 없어도 되지않을까 생각. 내가 우상단 버튼을 안쓰기 때문.
-
-
-
-

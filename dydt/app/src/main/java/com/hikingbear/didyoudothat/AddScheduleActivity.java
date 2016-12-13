@@ -31,35 +31,37 @@ import java.util.Date;
 public class AddScheduleActivity extends AppCompatActivity {
 
     private String subject, description; // 일정 제목, 일정 내용
-    private long hour, minute, weekday;   // 시, 분, 요일
     private ImageButton ib_applist;      // 앱선택 버튼
     private EditText et_time, et_sub, et_des; // edittext 시간, 제목, 내용
     private TextView tv_appname;         // 선택한 앱 이름
-    private ActionBar actionBar;
-    DBManager dbManager;    //subject TEXT, year INT, month INT, day INT, hour INT, minute INT, description TEXT
+
+    DBManager dbManager;    // _id, subject(제목), description(내용), weekday(요일), hour(시), minute(분), deleteable(임시저장 여부) 0(false)or 1(true), packagename(com.example.~~) 랑 appname(어플밑에 이름)
     int id_To_Update = 0;
     static Bundle extras;
-    boolean timecheck = false;
 
+    // 현재시간
     Calendar c = Calendar.getInstance();
-    long cTimeY = c.get(Calendar.YEAR);
-    long cTimeMO = c.get(Calendar.MONTH) + 1;   // 1을 더해줘야 제대로된 달이 나오더라.
-    long cTimeD = c.get(Calendar.DATE);
-    long cTimeWD = c.get(Calendar.DAY_OF_WEEK);
-    long cTimeH = c.get(Calendar.HOUR_OF_DAY);
-    long cTimeM = c.get(Calendar.MINUTE);
+    long cTimeWeekday = c.get(Calendar.DAY_OF_WEEK);
+    long cTimeHour = c.get(Calendar.HOUR);
+    long cTimeMinute = c.get(Calendar.MINUTE);
+
+    // 선택한시간. 저장된시간.
+    long sTimeWeekday;
+    long sTimeHour;
+    long sTimeMinute;
+
+    boolean timeSelect = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_schedule);
+        setContentView(R.layout.activity_addschedule);
 
         dbManager = new DBManager(getApplicationContext());
 
         //actionBar = getSupportActionBar();          // 아따 support가 넘나 어려운것..
         //actionBar.setDisplayHomeAsUpEnabled(true);  // 뒤로가기 버튼생성
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
 
         et_sub = (EditText)findViewById(R.id.et_subject);
         et_time = (EditText)findViewById(R.id.et_time);
@@ -83,18 +85,35 @@ public class AddScheduleActivity extends AppCompatActivity {
          *  앱선택버튼을 내 스마트폰에 설치된 어플 목록이 출력되는 ViewApplicationList activity가 열린다.
          *  그곳에서 앱을 선택하면 Bundle에 저장해 가져오는게 목표.
          *
+         *  bundle이 있으면 initDB를 하지말고 _id를 applistview로 가져가고,
+         *  bundle이 없으면 initDB를 해서 _id를 만들어준다.
          */
+
         ib_applist = (ImageButton) findViewById(R.id.ib_applist);
         ib_applist.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                Toast.makeText(AddScheduleActivity.this, "앱선택을 클릭하셨네욧", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AddScheduleActivity.this, "앱선택을 클릭하셨네요", Toast.LENGTH_SHORT).show();
+                Bundle tempBundle = new Bundle();
+                if(extras != null) {
+                    tempBundle.putInt("_id", extras.getInt("_id"));
+                } else if (extras == null) {
+                    dbManager.initDB();
+                    tempBundle.putInt("_id", dbManager.lastRecord());
+                }
                 Intent intent = new Intent (getApplicationContext(), ViewApplicationList.class);
+                intent.putExtras(tempBundle);
                 startActivity(intent);
 
             }
         });
+
+        cTimeWeekday = c.get(Calendar.DAY_OF_WEEK);
+        cTimeHour = c.get(Calendar.HOUR);
+        cTimeMinute = c.get(Calendar.MINUTE);
+
+        et_time.setText(getWeekday((int)cTimeWeekday)+"요일 "+cTimeHour+"시 "+cTimeMinute+"분");
 
         /**
          * main에서 일정을 클릭했을때 화면에 띄워줌.
@@ -105,53 +124,50 @@ public class AddScheduleActivity extends AppCompatActivity {
          * 평소에는 menu_addschedule 메뉴가 출력된다.
          */
         extras = getIntent().getExtras();
-        try {
-            int Value = extras.getInt("_id");
-            if (Value > 0) {
-            /*
-            int Value = extras.getInt("_id");
-            String appName = extras.getString("app");
 
-            System.out.println("=-=========================================================");
-            System.out.println("Value: " + Value);
-            System.out.println("appName: " + appName);
-            System.out.println("=-=========================================================");
-*/
-                //          if(Value>0) {
+        try {
+            System.out.println("============================================");
+            System.out.println("extras 요소");
+            System.out.println("extras.getInt(_id): "+extras.getInt("_id"));
+            System.out.println("extras.getString(subject): "+extras.getString("subject"));
+            System.out.println("extras.getString(app): "+extras.getString("appname"));
+            System.out.println("============================================");
+            int Value = extras.getInt("_id");
+            if (Value >= 0) {
+
                 Cursor rs = dbManager.getData(Value);
                 id_To_Update = Value;
                 rs.moveToFirst();
 
                 String _subject = rs.getString(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_SUBJECT));
-                String _year = rs.getString(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_YEAR));
-                String _month = rs.getString(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_MONTH));
-                String _day = rs.getString(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_DAY));
-                String _hour = rs.getString(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_HOUR));
-                String _minute = rs.getString(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_MINUTE));
                 String _description = rs.getString(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_DESCRIPTION));
-                String _appname = rs.getString(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_APP));
+                long _weekday = rs.getLong(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_WEEKDAY));
+                long _hour = rs.getLong(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_HOUR));
+                long _minute = rs.getLong(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_MINUTE));
+                String _packagename = rs.getString(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_PACKAGENAME));   // 사실 여기선 쓸일이..
+                String _appname = rs.getString(rs.getColumnIndex(DBManager.SCHEDULE_COLUMN_APPNAME));
 
-                System.out.println("=-=========================================================");
-                System.out.println("try  _appname: " + _appname);
-                System.out.println("=-=========================================================");
+                sTimeWeekday = _weekday;
+                sTimeHour = _hour;
+                sTimeMinute = _minute;
 
                 if (!rs.isClosed()) {
                     rs.close();
                 }
 
                 et_sub.setText(_subject);
-                et_time.setText(_year + "년 " + _month + "월 " + _day + "일 " + _hour + "시 " + _minute + "분");
                 et_des.setText(_description);
-                tv_appname.setText(_appname);
+                et_time.setText(getWeekday((int)sTimeWeekday)+"요일 "+sTimeHour+"시 "+sTimeMinute+"분");
+                if(extras.getString("appname") == "") {
+                    tv_appname.setText(_appname);
+                } else if (extras.getString("appname") != "") {
+                    tv_appname.setText(extras.getString("appname"));
+                }
+
                 //  }
             }
         } catch (Exception e) {
-            System.out.println("별일아님.");
         }
-
-
-
-
     }
     // 백그라운드에서 작동 하는일 없게..?
     @Override
@@ -160,24 +176,32 @@ public class AddScheduleActivity extends AppCompatActivity {
         finish();
     }
 
-    // actionbar 뒤로가기 버튼
+    /**
+     * 액션바 뒤로가기버튼입니다.
+     * getSupportActionBar().setDisplayHomeAsUpEnabled(true); 에서 만들어진 것.
+     * 여기서 뒤로가기하면 initDB로 생성된 DB를 삭제할것입니다.
+     * 즉 마지막에 생성된 db를 지우면되는거죠.
+     */
     @Override
     public boolean onSupportNavigateUp()  {
         finish();
         Toast.makeText(this, "뒤로가기", Toast.LENGTH_SHORT).show();
+        // bundle != null  &&  Deleteable(lastrecord, "boolean deleteable") == true 이면 삭제.
+        //if(extras != null)
+        //    dbManager.deleteSchedule(dbManager.lastRecord());
+
         return super.onSupportNavigateUp();
     }
+
     private TimePickerDialog.OnTimeSetListener tdpListener = new TimePickerDialog.OnTimeSetListener() {
         @Override
         public void onTimeSet(TimePicker view, int _hourOfDay, int _minute) {
-            //subject TEXT, year INT, month INT, day INT, hour INT, minute INT, description TEXT
+            sTimeHour = _hourOfDay;
+            sTimeMinute = _minute;
 
-            // 시간 정하고 확인버튼 눌렀을 때
             //Toast.makeText(getApplicationContext(), hourOfDay + "시 " + minute + "분", Toast.LENGTH_SHORT).show();
-            et_time.setText(_hourOfDay+"시 "+_minute+"분");
-            hour = _hourOfDay;
-            minute = _minute;
-            timecheck = true;
+            et_time.setText(getWeekday((int)cTimeWeekday)+"요일 "+sTimeHour+"시 "+sTimeMinute+"분");   //요일도 해야하는데.
+            timeSelect = true;
         }
     };
 
@@ -191,7 +215,6 @@ public class AddScheduleActivity extends AppCompatActivity {
 
         return true;
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -207,30 +230,13 @@ public class AddScheduleActivity extends AppCompatActivity {
                 subject = et_sub.getText().toString();
                 description = et_des.getText().toString();
 
-                //subject TEXT, year INT, month INT, day INT, hour INT, minute INT, description TEXT
-                // 날짜는 필요없고 요일이 필요할것 같다..? Today앱인데 필요할까? -> 안필요하다. 제목, 시, 분, 내용 4가지면 될듯. 나중에 수정바람
-                // 기본 시간입력이 필요함. 시분 요일
-
-                System.out.println("지금시간: "+cTimeY+ "년 "+cTimeMO+ "월 "+cTimeD+ "일 "+cTimeH+ "시 "+cTimeM+ "분 "+cTimeWD+"요일");
-
-                /**
-                 * if 시간선택 하면
-                 *      dbManager.insertSchedule(subject, Calendar.YEAR, Calendar.MONTH, Calendar.DATE, Calendar.HOUR_OF_DAY, Calendar.MINUTE, description);
-                 * else if 시간선택 안하면
-                 *      dbManager.insertSchedule(subject, Calendar.YEAR, Calendar.MONTH, Calendar.DATE, hour, minute, description);
-                 *
-                 * 여기서 시간선택한다는 걸 플래그를 줄지, 있던걸 체크하는방식으로할지 고민이 된다.
-                 */
-
-                if(timecheck == true) {
-                    dbManager.insertSchedule(subject, cTimeY, cTimeMO, cTimeD, hour, minute, description);
-                } else if (timecheck == false) {
-                    dbManager.insertSchedule(subject, cTimeY, cTimeMO, cTimeD, cTimeH, cTimeM, description);
+                // _id, subject(제목), description(내용), weekday(요일), hour(시), minute(분), deleteable(임시저장 여부) 0(false)or 1(true), packagename(com.example.~~) 랑 appname(어플밑에 이름)
+                if(timeSelect == false) {
+                    sTimeWeekday = cTimeWeekday;
+                    sTimeHour = cTimeHour;
+                    sTimeMinute = cTimeMinute;
                 }
-
-                //dbManager.insertSchedule(subject, Calendar.YEAR, 11, 10, hour, minute, description);
-
-                System.out.println("================================================");
+                dbManager.insertSchedule(subject, description, cTimeWeekday, sTimeHour, sTimeMinute, null, null); // cTimeWeekday를 sTimeWeekday 로 바꿀예정. 어플선택하면 여기 올리가 없으니까 null값 넣음.
 
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -240,13 +246,20 @@ public class AddScheduleActivity extends AppCompatActivity {
                 return true;
             }
         }
-        // 수정
+        /**
+         * 수정버튼. Bundle이 존재하면 액션바가 바뀌면서 등장.
+         *
+         */
         if(id == R.id.action_modify) {
             Toast.makeText(this, "수정되었습니다.", Toast.LENGTH_SHORT).show();
             subject = et_sub.getText().toString();
             description = et_des.getText().toString();
 
-            dbManager.updateSchedule(extras.getInt("_id"), subject, cTimeY, cTimeMO, cTimeD, hour, minute, description);
+            if(extras.getString("packagename") == null) {
+                dbManager.updateSchedule(extras.getInt("_id"), subject, description, cTimeWeekday, sTimeHour, sTimeMinute, null, null);
+            } else if (extras.getString("packagename") != null) {
+                dbManager.updateSchedule(extras.getInt("_id"), subject, description, cTimeWeekday, sTimeHour, sTimeMinute, extras.getString("packagename"), extras.getString("appname"));
+            }
 
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -261,6 +274,39 @@ public class AddScheduleActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         }
+
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * long cTimeWeekday를 한글로 바꿔줌
+     */
+    public String getWeekday(int i) {
+        String weekday = "";
+        switch (i) {
+            case 1:
+                weekday = "일";
+                break;
+            case 2:
+                weekday = "월";
+                break;
+            case 3:
+                weekday = "화";
+                break;
+            case 4:
+                weekday = "수";
+                break;
+            case 5:
+                weekday = "목";
+                break;
+            case 6:
+                weekday = "금";
+                break;
+            case 7:
+                weekday = "토";
+                break;
+        }
+
+        return weekday;
     }
 }
